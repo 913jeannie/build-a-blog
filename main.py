@@ -1,4 +1,4 @@
-from flask import Flask, request, redirect, render_template, session, flash
+from flask import Flask, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
@@ -17,6 +17,11 @@ class Blog(db.Model):
     def __init__(self, title, body):
         self.title = title
         self.body = body
+        
+@app.route("/")
+def index():
+   #/blog is the main page or index
+    return redirect("/blog")
 
 @app.route('/blog', methods=['POST', 'GET'])
 def blog():
@@ -30,30 +35,31 @@ def blog():
             blog = Blog.query.get(b)
             return render_template('singlepost.html', blog=blog)
 
-@app.route('/newpost', methods=['POST', 'GET'])
-def new_post():
-    if request.method == 'POST':
-        title = request.form['title']
-        body = request.form['body']
+@app.route('/newpost', methods = ['GET'])
+def newpost():
+    return render_template('newpost.html')
 
-        if not title:
-            flash('Title cannot be blank.')
-            return redirect('/newpost')
-        if not body:
-            flash('Enter a blog')
-            return redirect('/newpost')
+@app.route('/newpost', methods=['POST'])
+def add_post():
+    title = request.form['title']
+    body = request.form['body']
 
-        else:
-            new_post = Blog(title, body)
-            db.session.add(new_post)
-            db.session.commit()
+    if not title and not body:
+        return render_template('newpost.html', title_error='Title cannot be blank', body_error='Enter a blog')
 
-            #b = new_post.id
-            #blog = Blog.query.get(b)
-            #return render_template('singlepost.html', blog=blog)
-            
+    elif not title:
+        return render_template('newpost.html', title_error='Title cannot be blank', body=body)
+    
+    elif not body:
+        return render_template('newpost.html', title=title, body_error='Enter a blog')
+        
+    else:
+        new_post = Blog(title, body)
+        db.session.add(new_post)
+        db.session.commit()
+
         return redirect('/blog')
 
-    return render_template('newpost.html')
+    #return render_template('newpost.html')
 if __name__ == '__main__':
     app.run() 
